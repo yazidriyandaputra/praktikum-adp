@@ -6,32 +6,28 @@ import random
 from termcolor import colored, cprint
 import pygame
 import pyfiglet
-import sys
 
-# Konstanta
 SAVE_FILE = "harvest_moon.txt"
 MUSIC_FILE = "Harvest Moon_ Back to Nature  Spring  OST.mp3"
 INTRO_MUSIC_FILE = "Harvest Moon_ Back to Nature  Opening  OST.mp3"
 
-UANG_AWAL = 10
-BIBIT_APEL_AWAL = 3
-UKURAN_LAHAN_BARIS_AWAL = 2
-UKURAN_LAHAN_KOLOM_AWAL = 2
-KAPASITAS_AIR_AWAL = 4
-UKURAN_LAHAN_MAKSIMAL = 5
-KAPASITAS_AIR_MAKSIMAL = 15
-BIAYA_UPGRADE_AIR = 75
-PENGALI_BIAYA_PERLUASAN = 10
-PINJAMAN_MAKSIMAL = 20
+Uang_AwaL = 10
+Bibit_Apel_Awal = 3
+Ukuran_Lahan_Baris_Awal = 2
+Ukuran_Lahan_Kolom_Awal = 2
+Kapasitas_Air_Upgrade = [4, 9, 16, 25]
+Kapasitas_Air_Awal = Kapasitas_Air_Upgrade[0]
+Kapasitas_Air_Maksimal = Kapasitas_Air_Upgrade[-1]
+Biaya_Upgrade_Air = [15, 30, 50] 
+Pinjaman_Maksimal = 30
 
-HARGA_BIBIT = {"apel": 5, "tomat": 12, "lettuce": 20}
-HARGA_JUAL = {"apel": 2, "tomat": 4, "lettuce": 10}
-HARI_TUMBUH = {"apel": 2, "tomat": 3, "lettuce": 4}
-EMOJI_TANAMAN = {"apel": "🍎", "tomat": "🍅", "lettuce": "🥬"}
+Harga_Bibit = {"apel": 5, "tomat": 12, "lettuce": 20}
+Harga_Jual = {"apel": 2, "tomat": 4, "lettuce": 10}
+Hari_Tumbuh = {"apel": 2, "tomat": 3, "lettuce": 4}
+Emoji_Tanaman = {"apel": "🍎", "tomat": "🍅", "lettuce": "🥬"}
 
-# Panjang header
-TEXT_HEADER = "HARVEST MOON"
-PANJANG_HEADER = 72
+Judul = "HARVEST MOON"
+Panjang_Header = 72
 
 def bersihkan_layar():
     """Membersihkan layar terminal"""
@@ -39,9 +35,9 @@ def bersihkan_layar():
 
 def tampilkan_header(teks):
     """Menampilkan header dengan panjang konsisten"""
-    cprint(f"\n{'=' * PANJANG_HEADER}", 'yellow')
-    cprint(f"{teks.center(PANJANG_HEADER)}", 'yellow', attrs=['bold'])
-    cprint(f"{'=' * PANJANG_HEADER}", 'yellow')
+    cprint(f"\n{'=' * Panjang_Header}", 'yellow')
+    cprint(f"{teks.center(Panjang_Header)}", 'yellow', attrs=["bold"])
+    cprint(f"{'=' * Panjang_Header}", 'yellow')
 
 def tampilkan_pesan(teks, status="info"):
     """Menampilkan pesan dengan ikon dan warna yang sesuai"""
@@ -59,27 +55,16 @@ def tekan_enter():
 
 def mainkan_musik_intro():
     """Memainkan musik intro jika tersedia"""
-    try:
-        if exists(INTRO_MUSIC_FILE):
-            pygame.mixer.music.load(INTRO_MUSIC_FILE)
-            pygame.mixer.music.play(-1)
-            return True
-    except Exception as e:
-        tampilkan_pesan(f"Error memainkan musik intro: {str(e)}", "error")
-    return False
+    pygame.mixer.init()
+    pygame.mixer.music.load(INTRO_MUSIC_FILE)
+    pygame.mixer.music.play(-1)
+    return True
 
 def inisialisasi_musik():
     """Menginisialisasi musik latar"""
-    try:
-        if not exists(MUSIC_FILE):
-            tampilkan_pesan(f"Peringatan: File musik '{MUSIC_FILE}' tidak ditemukan.", "error")
-            return False
-        pygame.mixer.init()
-        pygame.mixer.music.load(MUSIC_FILE)
-        return True
-    except Exception as e:
-        tampilkan_pesan(f"Error inisialisasi musik: {str(e)}", "error")
-        return False
+    pygame.mixer.init()
+    pygame.mixer.music.load(MUSIC_FILE)
+    return True
 
 def toggle_musik(data_pemain, musik_tersedia):
     """Menyalakan/mematikan musik"""
@@ -97,18 +82,18 @@ def toggle_musik(data_pemain, musik_tersedia):
 
 def game_baru():
     """Membuat data game baru"""
-    lahan_awal = [[None] * UKURAN_LAHAN_KOLOM_AWAL for _ in range(UKURAN_LAHAN_BARIS_AWAL)]
+    lahan_awal = [[None] * Ukuran_Lahan_Kolom_Awal for _ in range(Ukuran_Lahan_Baris_Awal)]
     return {
-        "uang": UANG_AWAL,
-        "bibit": {"apel": BIBIT_APEL_AWAL, "tomat": 0, "lettuce": 0},
+        "uang": Uang_AwaL,
+        "bibit": {"apel": Bibit_Apel_Awal, "tomat": 0, "lettuce": 0},
         "inventaris": {},
-        "baris_lahan": UKURAN_LAHAN_BARIS_AWAL,
-        "kolom_lahan": UKURAN_LAHAN_KOLOM_AWAL,
+        "baris_lahan": Ukuran_Lahan_Baris_Awal,
+        "kolom_lahan": Ukuran_Lahan_Kolom_Awal,
         "lahan": lahan_awal,
         "hari": 1,
         "hutang": 0,
-        "kapasitas_air": KAPASITAS_AIR_AWAL,
-        "sisa_air": KAPASITAS_AIR_AWAL,
+        "kapasitas_air": Kapasitas_Air_Awal,
+        "sisa_air": Kapasitas_Air_Awal,
         "tomat_terbuka": False,
         "lettuce_terbuka": False,
         "musik_nyala": True,
@@ -129,16 +114,12 @@ def muat_game():
         for line in f:
             if ':' in line:
                 key, value_str = line.strip().split(':', 1)
-                try:
-                    data_pemain[key] = eval(value_str)
-                except Exception:
-                    tampilkan_pesan(f"Peringatan: data '{key}' rusak dan diabaikan.", "error")
-                    continue
+                data_pemain[key] = eval(value_str)
     return data_pemain
 
 def tampilkan_lahan(data_pemain):
     """Menampilkan kondisi lahan"""
-    tampilkan_header("🏡 LAHANMU 🏡")
+    tampilkan_header("🏡 LADANGMU 🏡")
     cprint(f"Sisa Air Hari Ini: {data_pemain['sisa_air']}/{data_pemain['kapasitas_air']} 💧", 'blue')
     
     for i in range(data_pemain["baris_lahan"]):
@@ -149,19 +130,19 @@ def tampilkan_lahan(data_pemain):
                 tampilan_str = colored("[🟫]", 'white', 'on_grey')
             else:
                 hari_tersisa = tanaman["hari_tumbuh"]
-                emoji_tanaman = EMOJI_TANAMAN.get(tanaman["nama"], "❓")
+                emoji_tanaman = Emoji_Tanaman.get(tanaman["nama"], "❓")
                 status_air = "" if tanaman.get("disiram") else colored("🚱", 'red')
                 if hari_tersisa <= 0:
                     tampilan_str = colored(f"[{emoji_tanaman}P]", 'green', attrs=['bold'])
-                elif hari_tersisa == HARI_TUMBUH.get(tanaman["nama"]):
+                elif hari_tersisa == Hari_Tumbuh.get(tanaman["nama"]):
                     tampilan_str = colored(f"[.🌱{status_air}]", 'yellow')
                 else:
                     tampilan_str = colored(f"[🌿{status_air}]", 'cyan')
             baris_tampilan.append(tampilan_str)
-        print(" ".join(baris_tampilan) + f"  Baris {i+1}")
+        print(" ".join(baris_tampilan) + f"  B{i+1}")
     
-    print("\n" + " ".join([f" Kol {k+1} " for k in range(data_pemain['kolom_lahan'])]))
-    cprint("\nKeterangan: 🟫Kosong, .🌱Bibit, 🌿Tunas, P-Panen, 🚱Belum Disiram", 'grey')
+    print("\n" + " ".join([f" K{k+1} " for k in range(data_pemain['kolom_lahan'])]))
+    cprint("\nKeterangan: 🟫Kosong, 🌱Bibit, 🌿Tunas, P-Panen, 🚱Belum Disiram", 'grey')
 
 def tanam_bibit(data_pemain):
     """Menanam bibit di lahan"""
@@ -176,39 +157,44 @@ def tanam_bibit(data_pemain):
     tampilkan_pesan("Bibit yang kamu miliki:", "info")
     for bibit, jumlah in data_pemain["bibit"].items():
         if jumlah > 0:
-            print(f" - {EMOJI_TANAMAN.get(bibit, '')} {bibit.capitalize()}: {jumlah}")
+            print(f" - {Emoji_Tanaman.get(bibit, '')} {bibit.capitalize()}: {jumlah}")
     
-    try:
-        baris = int(input(f"\nPilih baris (1-{data_pemain['baris_lahan']}) atau 0 untuk batal: ")) - 1
-        if baris == -1:
-            return False
-        kolom = int(input(f"Pilih kolom (1-{data_pemain['kolom_lahan']}): ")) - 1
-        bibit_ditanam = input("Pilih bibit yang ingin ditanam: ").lower()
-        
-        if bibit_ditanam not in data_pemain["bibit"] or data_pemain["bibit"][bibit_ditanam] <= 0:
-            tampilkan_pesan(f"Kamu tidak punya bibit {bibit_ditanam}!", "error")
-            return False
-            
-        if not (0 <= baris < data_pemain["baris_lahan"] and 0 <= kolom < data_pemain["kolom_lahan"]):
-            tampilkan_pesan("Lokasi tidak valid!", "error")
-            return False
-            
-        if data_pemain["lahan"][baris][kolom] is not None:
-            tampilkan_pesan("Lokasi ini sudah terisi!", "error")
-            return False
-            
-        data_pemain["lahan"][baris][kolom] = {
-            "nama": bibit_ditanam,
-            "hari_tumbuh": HARI_TUMBUH[bibit_ditanam],
-            "disiram": False
-        }
-        data_pemain["bibit"][bibit_ditanam] -= 1
-        tampilkan_pesan(f"Berhasil menanam {bibit_ditanam} di ({baris+1}, {kolom+1})!", "success")
-        return True
-        
-    except ValueError:
+    baris_input = input(f"\nPilih baris (1-{data_pemain['baris_lahan']}) atau 0 untuk batal: ")
+    if not baris_input.isdigit():
         tampilkan_pesan("Masukkan angka yang valid!", "error")
         return False
+    baris = int(baris_input) - 1
+    if baris == -1:
+        return False
+
+    kolom_input = input(f"Pilih kolom (1-{data_pemain['kolom_lahan']}): ")
+    if not kolom_input.isdigit():
+        tampilkan_pesan("Masukkan angka yang valid!", "error")
+        return False
+    kolom = int(kolom_input) - 1
+
+    bibit_ditanam = input("Pilih bibit yang ingin ditanam: ").lower()
+    
+    if bibit_ditanam not in data_pemain["bibit"] or data_pemain["bibit"][bibit_ditanam] <= 0:
+        tampilkan_pesan(f"Kamu tidak punya bibit {bibit_ditanam}!", "error")
+        return False
+        
+    if not (0 <= baris < data_pemain["baris_lahan"] and 0 <= kolom < data_pemain["kolom_lahan"]):
+        tampilkan_pesan("Lokasi tidak valid!", "error")
+        return False
+        
+    if data_pemain["lahan"][baris][kolom] is not None:
+        tampilkan_pesan("Lokasi ini sudah terisi!", "error")
+        return False
+        
+    data_pemain["lahan"][baris][kolom] = {
+        "nama": bibit_ditanam,
+        "hari_tumbuh": Hari_Tumbuh[bibit_ditanam],
+        "disiram": False
+    }
+    data_pemain["bibit"][bibit_ditanam] -= 1
+    tampilkan_pesan(f"Berhasil menanam {bibit_ditanam} di ({baris+1}, {kolom+1})!", "success")
+    return True
 
 def siram_tanaman(data_pemain):
     """Menyiram tanaman di lahan"""
@@ -227,34 +213,39 @@ def siram_tanaman(data_pemain):
         
         try:
             baris = int(input(f"Baris (1-{data_pemain['baris_lahan']}): ")) - 1
-            if baris == -1:
-                break
-            kolom = int(input(f"Kolom (1-{data_pemain['kolom_lahan']}): ")) - 1
-            
-            if not (0 <= baris < data_pemain["baris_lahan"] and 0 <= kolom < data_pemain["kolom_lahan"]):
-                tampilkan_pesan("Lokasi tidak valid!", "error")
-                time.sleep(1)
-                continue
-                
-            tanaman = data_pemain["lahan"][baris][kolom]
-            if not tanaman:
-                tampilkan_pesan("Tidak ada tanaman di sini!", "error")
-                time.sleep(1)
-                continue
-                
-            if tanaman.get("disiram"):
-                tampilkan_pesan("Tanaman ini sudah disiram!", "info")
-                time.sleep(1)
-                continue
-                
-            tanaman["disiram"] = True
-            data_pemain["sisa_air"] -= 1
-            tampilkan_pesan(f"Berhasil menyiram {tanaman['nama']} di ({baris+1}, {kolom+1})!", "success")
-            time.sleep(1)
-            
         except ValueError:
             tampilkan_pesan("Masukkan angka yang valid!", "error")
             time.sleep(1)
+            continue
+        if baris == -1:
+            break
+        try:
+            kolom = int(input(f"Kolom (1-{data_pemain['kolom_lahan']}): ")) - 1
+        except ValueError:
+            tampilkan_pesan("Masukkan angka yang valid!", "error")
+            time.sleep(1)
+            continue
+        
+        if not (0 <= baris < data_pemain["baris_lahan"] and 0 <= kolom < data_pemain["kolom_lahan"]):
+            tampilkan_pesan("Lokasi tidak valid!", "error")
+            time.sleep(1)
+            continue
+            
+        tanaman = data_pemain["lahan"][baris][kolom]
+        if not tanaman:
+            tampilkan_pesan("Tidak ada tanaman di sini!", "error")
+            time.sleep(1)
+            continue
+            
+        if tanaman.get("disiram"):
+            tampilkan_pesan("Tanaman ini sudah disiram!", "info")
+            time.sleep(1)
+            continue
+            
+        tanaman["disiram"] = True
+        data_pemain["sisa_air"] -= 1
+        tampilkan_pesan(f"Berhasil menyiram {tanaman['nama']} di ({baris+1}, {kolom+1})!", "success")
+        time.sleep(1)
 
 def tidur(data_pemain):
     """Memajukan waktu ke hari berikutnya dan mengembalikan notifikasi tanaman layu"""
@@ -300,7 +291,7 @@ def panen(data_pemain):
                 nama_tanaman = tanaman["nama"]
                 jumlah = random.randint(2, 5)
                 data_pemain["inventaris"][nama_tanaman] = data_pemain["inventaris"].get(nama_tanaman, 0) + jumlah
-                tampilkan_pesan(f"Kamu memanen {jumlah} {EMOJI_TANAMAN.get(nama_tanaman, '')} {nama_tanaman}!", "success")
+                tampilkan_pesan(f"Kamu memanen {jumlah} {Emoji_Tanaman.get(nama_tanaman, '')} {nama_tanaman}!", "success")
                 data_pemain["lahan"][i][j] = None
                 
                 # Membuka bibit baru
@@ -325,14 +316,14 @@ def tampilkan_inventaris(data_pemain):
         print("Kosong.")
     else:
         for bibit, jumlah in bibit_dimiliki.items():
-            print(f" - {EMOJI_TANAMAN.get(bibit, '')} {bibit.capitalize()}: {jumlah} buah")
+            print(f" - {Emoji_Tanaman.get(bibit, '')} {bibit.capitalize()}: {jumlah} buah")
     
     cprint("\n--- Keranjang Panen ---", attrs=['bold'])
     if not data_pemain["inventaris"]:
         print("Kosong.")
     else:
         for item, jumlah in data_pemain["inventaris"].items():
-            print(f" - {EMOJI_TANAMAN.get(item, '')} {item.capitalize()}: {jumlah} buah")
+            print(f" - {Emoji_Tanaman.get(item, '')} {item.capitalize()}: {jumlah} buah")
 
 def jual_hasil(data_pemain):
     """Menjual hasil panen"""
@@ -343,37 +334,38 @@ def jual_hasil(data_pemain):
     
     tampilkan_pesan("Isi keranjang panenmu:", "info")
     for item, jumlah in data_pemain["inventaris"].items():
-        print(f"- {EMOJI_TANAMAN.get(item, '')} {item.capitalize()}: {jumlah} (Harga: ${HARGA_JUAL[item]}/buah)")
+        print(f"- {Emoji_Tanaman.get(item, '')} {item.capitalize()}: {jumlah} (Harga: ${Harga_Jual[item]}/buah)")
     
     item_dijual = input("\nApa yang ingin kamu jual? (atau 'batal'): ").lower()
     if item_dijual == 'batal':
         return
         
     if item_dijual in data_pemain["inventaris"] and data_pemain["inventaris"][item_dijual] > 0:
-        try:
-            jumlah = int(input(f"Berapa banyak {item_dijual}? "))
-            if 0 < jumlah <= data_pemain["inventaris"][item_dijual]:
-                pendapatan = HARGA_JUAL[item_dijual] * jumlah
-                data_pemain["uang"] += pendapatan
-                data_pemain["inventaris"][item_dijual] -= jumlah
-                if data_pemain["inventaris"][item_dijual] == 0:
-                    del data_pemain["inventaris"][item_dijual]
-                tampilkan_pesan(f"Berhasil menjual {jumlah} {item_dijual} dan dapat ${pendapatan}!", "success")
-            else:
-                tampilkan_pesan("Jumlah tidak valid.", "error")
-        except ValueError:
+        jumlah_input = input(f"Berapa banyak {item_dijual}? ")
+        if not jumlah_input.isdigit():
             tampilkan_pesan("Masukkan angka yang valid!", "error")
+            return
+        jumlah = int(jumlah_input)
+        if 0 < jumlah <= data_pemain["inventaris"][item_dijual]:
+            pendapatan = Harga_Jual[item_dijual] * jumlah
+            data_pemain["uang"] += pendapatan
+            data_pemain["inventaris"][item_dijual] -= jumlah
+            if data_pemain["inventaris"][item_dijual] == 0:
+                del data_pemain["inventaris"][item_dijual]
+            tampilkan_pesan(f"Berhasil menjual {jumlah} {item_dijual} dan dapat ${pendapatan}!", "success")
+        else:
+            tampilkan_pesan("Jumlah tidak valid.", "error")
     else:
         tampilkan_pesan("Item tidak ada di inventaris.", "error")
 
 def perluas_lahan(data_pemain):
     """Memperluas lahan pertanian"""
     tampilkan_header("🏞️ PERLUAS LAHAN 🏞️")
-    if data_pemain["baris_lahan"] >= UKURAN_LAHAN_MAKSIMAL:
+    if data_pemain["baris_lahan"] >= Kapasitas_Air_Upgrade[-1]:
         tampilkan_pesan("Lahanmu sudah maksimal!", "info")
         return
         
-    biaya = (data_pemain["baris_lahan"] * data_pemain["kolom_lahan"]) * PENGALI_BIAYA_PERLUASAN
+    biaya = (data_pemain["baris_lahan"] * data_pemain["kolom_lahan"]) * 10
     ukuran_baru = f"{data_pemain['baris_lahan'] + 1}x{data_pemain['kolom_lahan'] + 1}"
     tampilkan_pesan(f"Biaya perluasan menjadi {ukuran_baru} adalah ${biaya}", "info")
     
@@ -410,33 +402,31 @@ def bank(data_pemain):
             tampilkan_pesan("LUNASI dulu hutang sebelumnya!", "error")
             return
             
-        try:
-            jumlah = int(input(f"Jumlah pinjaman (maks ${PINJAMAN_MAKSIMAL}): "))
-            if 0 < jumlah <= PINJAMAN_MAKSIMAL:
-                data_pemain["uang"] += jumlah
-                data_pemain["hutang"] += jumlah
-                tampilkan_pesan(f"Berhasil meminjam ${jumlah}.", "success")
-            else:
-                tampilkan_pesan(f"Jumlah pinjaman tidak valid.", "error")
-        except ValueError:
+        jumlah_input = input(f"Jumlah pinjaman (maks ${Pinjaman_Maksimal}): ")
+        if not jumlah_input.isdigit():
             tampilkan_pesan("Masukkan angka yang valid!", "error")
+            return
+        jumlah = int(jumlah_input)
+        if 0 < jumlah <= Pinjaman_Maksimal:
+            data_pemain["uang"] += jumlah
+            data_pemain["hutang"] += jumlah
+            tampilkan_pesan(f"Berhasil meminjam ${jumlah}.", "success")
+        else:
+            tampilkan_pesan(f"Jumlah pinjaman tidak valid.", "error")
             
     elif pilihan == '2':
         if data_pemain["hutang"] == 0:
             tampilkan_pesan("Kamu tidak punya hutang.", "info")
             return
             
-        try:
-            jumlah = int(input(f"Jumlah pembayaran (maks ${data_pemain['hutang']}): "))
-            if 0 < jumlah <= data_pemain["uang"]:
-                bayar = min(jumlah, data_pemain["hutang"])
-                data_pemain["uang"] -= bayar
-                data_pemain["hutang"] -= bayar
-                tampilkan_pesan(f"Berhasil membayar hutang ${bayar}.", "success")
-            else:
-                tampilkan_pesan("Uang tidak cukup atau jumlah tidak valid.", "error")
-        except ValueError:
-            tampilkan_pesan("Masukkan angka yang valid!", "error")
+        jumlah = int(input(f"Jumlah pembayaran (maks ${data_pemain['hutang']}): "))
+        if 0 < jumlah <= data_pemain["uang"]:
+            bayar = min(jumlah, data_pemain["hutang"])
+            data_pemain["uang"] -= bayar
+            data_pemain["hutang"] -= bayar
+            tampilkan_pesan(f"Berhasil membayar hutang ${bayar}.", "success")
+        else:
+            tampilkan_pesan("Uang tidak cukup atau jumlah tidak valid.", "error")
 
 def pasar(data_pemain):
     """Menu pasar untuk membeli bibit dan upgrade"""
@@ -450,37 +440,38 @@ def pasar(data_pemain):
         if pilihan == '1':
             bersihkan_layar()
             tampilkan_header("🌱 BELI BIBIT 🌱")
-            for bibit, harga in HARGA_BIBIT.items():
+            for bibit, harga in Harga_Bibit.items():
                 if (bibit == "tomat" and not data_pemain.get("tomat_terbuka")) or \
                    (bibit == "lettuce" and not data_pemain.get("lettuce_terbuka")):
                     continue
-                print(f"- {EMOJI_TANAMAN.get(bibit, '')} {bibit.capitalize()}: ${harga}")
+                print(f"- {Emoji_Tanaman.get(bibit, '')} {bibit.capitalize()}: ${harga}")
             
             bibit_dibeli = input("\nApa yang ingin kamu beli? (atau 'batal'): ").lower()
             if bibit_dibeli == 'batal':
                 continue
                 
-            if bibit_dibeli in HARGA_BIBIT:
+            if bibit_dibeli in Harga_Bibit:
                 # Cek apakah bibit sudah terbuka
                 if (bibit_dibeli == "tomat" and not data_pemain.get("tomat_terbuka")) or \
                    (bibit_dibeli == "lettuce" and not data_pemain.get("lettuce_terbuka")):
                     tampilkan_pesan("Bibit tidak tersedia atau belum terbuka.", "error")
                     tekan_enter()
                     break
-                try:
-                    jumlah = int(input(f"Berapa banyak bibit {bibit_dibeli}? "))
-                    if jumlah <= 0:
-                        tampilkan_pesan("Jumlah harus positif.", "error")
-                    else:
-                        total = HARGA_BIBIT[bibit_dibeli] * jumlah
-                        if data_pemain["uang"] >= total:
-                            data_pemain["uang"] -= total
-                            data_pemain["bibit"][bibit_dibeli] += jumlah
-                            tampilkan_pesan(f"Berhasil membeli {jumlah} bibit {bibit_dibeli}!", "success")
-                        else:
-                            tampilkan_pesan("Uang tidak cukup.", "error")
-                except ValueError:
+                jumlah_input = input(f"Berapa banyak bibit {bibit_dibeli}? ")
+                if not jumlah_input.isdigit():
                     tampilkan_pesan("Masukkan angka yang valid!", "error")
+                    continue
+                jumlah = int(jumlah_input)
+                if jumlah <= 0:
+                    tampilkan_pesan("Jumlah harus positif.", "error")
+                else:
+                    total = Harga_Bibit[bibit_dibeli] * jumlah
+                    if data_pemain["uang"] >= total:
+                        data_pemain["uang"] -= total
+                        data_pemain["bibit"][bibit_dibeli] += jumlah
+                        tampilkan_pesan(f"Berhasil membeli {jumlah} bibit {bibit_dibeli}!", "success")
+                    else:
+                        tampilkan_pesan("Uang tidak cukup.", "error")
             else:
                 tampilkan_pesan("Bibit tidak tersedia.", "error")
             tekan_enter()
@@ -489,25 +480,29 @@ def pasar(data_pemain):
         elif pilihan == '2':
             bersihkan_layar()
             tampilkan_header("💧 UPGRADE AIR 💧")
-            if data_pemain.get("kapasitas_air", KAPASITAS_AIR_AWAL) >= KAPASITAS_AIR_MAKSIMAL:
+            kapasitas_sekarang = data_pemain.get("kapasitas_air", Kapasitas_Air_Awal)
+            if kapasitas_sekarang >= Kapasitas_Air_Maksimal:
                 tampilkan_pesan("Kapasitas air sudah maksimal!", "info")
             else:
-                tampilkan_pesan(f"Kapasitas saat ini: {data_pemain['kapasitas_air']} 💧", "info")
-                tampilkan_pesan(f"Upgrade ke: {KAPASITAS_AIR_MAKSIMAL} 💧", "info")
-                tampilkan_pesan(f"Biaya: ${BIAYA_UPGRADE_AIR} 💰", "info")
+                # Cari tingkat upgrade berikutnya
+                idx_sekarang = Kapasitas_Air_Upgrade.index(kapasitas_sekarang)
+                kapasitas_baru = Kapasitas_Air_Upgrade[idx_sekarang + 1]
+                biaya_upgrade = Biaya_Upgrade_Air[idx_sekarang]
+                tampilkan_pesan(f"Kapasitas saat ini: {kapasitas_sekarang} 💧", "info")
+                tampilkan_pesan(f"Upgrade ke: {kapasitas_baru} 💧", "info")
+                tampilkan_pesan(f"Biaya: ${biaya_upgrade} 💰", "info")
                 
                 konfirmasi = input("Apakah ingin upgrade? (y/n): ").lower()
                 if konfirmasi == 'y':
-                    if data_pemain['uang'] >= BIAYA_UPGRADE_AIR:
-                        data_pemain['uang'] -= BIAYA_UPGRADE_AIR
-                        data_pemain['kapasitas_air'] = KAPASITAS_AIR_MAKSIMAL
-                        data_pemain['sisa_air'] = KAPASITAS_AIR_MAKSIMAL
+                    if data_pemain['uang'] >= biaya_upgrade:
+                        data_pemain['uang'] -= biaya_upgrade
+                        data_pemain['kapasitas_air'] = kapasitas_baru
+                        data_pemain['sisa_air'] = kapasitas_baru
                         tampilkan_pesan("Kapasitas air berhasil di-upgrade!", "success")
                     else:
                         tampilkan_pesan("Uang tidak cukup untuk upgrade.", "error")
             tekan_enter()
             break
-            
         elif pilihan == '3':
             break
 
@@ -525,17 +520,19 @@ def pengaturan(data_pemain, musik_tersedia):
 def tampilkan_loading(teks="Memuat...", durasi=2):
     """Menampilkan loading bar dengan info-info tentang game di bawah bar, info tampil acak (5 info berbeda) selama bar berjalan"""
     bersihkan_layar()
+
     # Tampilkan ASCII art HARVEST MOON
-    ascii_art = pyfiglet.figlet_format(TEXT_HEADER)
-    print(ascii_art)
-    cprint("=" * PANJANG_HEADER, 'yellow')
-    cprint("Selamat Datang di".center(PANJANG_HEADER), 'yellow', attrs=['bold'])
-    cprint("HARVEST MOON".center(PANJANG_HEADER), 'cyan', attrs=['bold', 'underline'])
-    cprint("=" * PANJANG_HEADER, 'yellow')
+    judul_game = pyfiglet.figlet_format(Judul)
+    print(judul_game)
+    cprint("=" * Panjang_Header, 'yellow')
+    cprint("Selamat Datang di".center(Panjang_Header), 'yellow', attrs=['bold'])
+    cprint("HARVEST MOON".center(Panjang_Header), 'cyan', attrs=['bold', 'underline'])
+    cprint("=" * Panjang_Header, 'yellow')
     print()
-    cprint(teks.center(PANJANG_HEADER), 'magenta')
+    cprint(teks.center(Panjang_Header), 'magenta')
     print()
-    bar_length = 30
+
+    bar_length = 40
 
     # Daftar info game
     info_list = [
@@ -550,31 +547,36 @@ def tampilkan_loading(teks="Memuat...", durasi=2):
         "Jangan lupa simpan permainanmu secara berkala!",
         "Setiap tanaman punya waktu tumbuh yang berbeda.",
     ]
+
     # Ambil 5 info acak tanpa duplikat
     info_pilihan = random.sample(info_list, 5)
-    delay = 0.5  # Per step, total waktu ~15 detik
 
-    # Bagi bar menjadi 5 bagian, setiap bagian tampilkan info berbeda
-    steps_per_info = (bar_length + 1) // 5
+    delay = 0.2  # Delay per langkah
+    steps_per_info = 8
+
     for i in range(bar_length + 1):
         percent = int((i / bar_length) * 100)
         bar = '█' * i + '-' * (bar_length - i)
-        bar_str = f"[{bar}] {percent}%"
+        bar_str = f"[{bar}] {percent}%".center(Panjang_Header)
+
         # Pilih info berdasarkan bagian bar
         info_idx = min(i // steps_per_info, 4)
         info = info_pilihan[info_idx]
-        # Bar loading di tengah
-        print(' ' * ((PANJANG_HEADER - len(bar_str)) // 2) + bar_str)
-        # Info di bawah bar, tetap di tengah
-        print(' ' * ((PANJANG_HEADER - len(info)) // 2) + colored(info, 'cyan'))
-        # Kembali ke atas bar untuk update (2 baris ke atas)
+        info_str = colored(info.center(Panjang_Header), 'cyan')
+
+        # Tampilkan bar dan info
+        print(bar_str)
+        print(info_str)
+
+        # Geser kursor ke atas 2 baris untuk menimpa
         if i != bar_length:
-            print(f"\033[F\033[F", end='')  # ANSI escape: move cursor up 2 lines
-        sys.stdout.flush()
+            print("\033[F\033[F", end='')
+
         time.sleep(delay)
+
     time.sleep(1)
 
-def tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, PANJANG_HEADER, data_pemain):
+def tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, Panjang_Header, data_pemain):
     """Menampilkan tutorial di bawah menu aksi, satu dialog per tampilan"""
     dialog = [
         ("Pak Budi", "😊", "Halo! Namaku Pak Budi, aku akan membantumu bertani di desa ini."),
@@ -587,14 +589,14 @@ def tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, PANJANG_HEADER, data
     for nama, ekspresi, kalimat in dialog:
         bersihkan_layar()
         status = f"🗓 HARI KE-{data_pemain['hari']} | 💰 UANG: ${data_pemain['uang']} | 🏦 HUTANG: ${data_pemain['hutang']} "
-        cprint(status.center(PANJANG_HEADER), 'white', 'on_blue')
+        cprint(status.center(Panjang_Header), 'white', 'on_blue')
         tampilkan_lahan(data_pemain)
         tampilkan_header("PILIH AKSI")
         for i in range(baris_menu):
             kolom_kiri = menu_items[i]
             kolom_kanan = menu_items[i + baris_menu] if i + baris_menu < len(menu_items) else ""
             menu_line = f"{kolom_kiri.ljust(kolom_lebar)}{kolom_kanan.ljust(kolom_lebar)}"
-            print(menu_line[:PANJANG_HEADER])
+            print(menu_line[:Panjang_Header])
         print()
         cprint(f"{nama} {ekspresi}:", 'yellow', end=" ")
         print(kalimat)
@@ -605,36 +607,27 @@ def main():
     """Fungsi utama game"""
     # Inisialisasi
     bersihkan_layar()
-    pygame.mixer.init()
-    
-    # Coba mainkan musik intro
-    try:
-        if exists(INTRO_MUSIC_FILE):
-            pygame.mixer.music.load(INTRO_MUSIC_FILE)
-            pygame.mixer.music.play(-1)
-    except:
-        pass
-    
+
     data_pemain = None
-    tutorial_sudah = False  # <-- Inisialisasi di sini
+    tutorial_sudah = False
 
     # Menu awal
     intro_berjalan = mainkan_musik_intro()
     while data_pemain is None:
         bersihkan_layar()
-        ascii_art = pyfiglet.figlet_format(TEXT_HEADER)
-        print(ascii_art)
-        cprint("=" * PANJANG_HEADER, 'yellow')
-        cprint("Selamat Datang di".center(PANJANG_HEADER), 'yellow', attrs=['bold'])
-        cprint("HARVEST MOON".center(PANJANG_HEADER), 'cyan', attrs=['bold', 'underline'])
-        cprint("=" * PANJANG_HEADER, 'yellow')
-        cprint("Petualangan bertani dan berbisnis dimulai di sini.".center(PANJANG_HEADER), 'cyan')
-        cprint("Pilih menu di bawah untuk memulai:".center(PANJANG_HEADER), 'magenta')
+        judul_game = pyfiglet.figlet_format(Judul)
+        print(judul_game)
+        cprint("=" * Panjang_Header, 'yellow')
+        cprint("Selamat Datang di".center(Panjang_Header), 'yellow', attrs=['bold'])
+        cprint("HARVEST MOON".center(Panjang_Header), 'cyan', attrs=['bold', 'underline'])
+        cprint("=" * Panjang_Header, 'yellow')
+        cprint("Petualangan bertani dan berbisnis dimulai di sini.".center(Panjang_Header), 'cyan')
+        cprint("Pilih menu di bawah untuk memulai:".center(Panjang_Header), 'magenta')
         print()
-        cprint("  1. 🎮  Mulai Permainan Baru", 'white', 'on_green')
-        cprint("  2. 💾  Lanjutkan Permainan", 'white', 'on_blue')
+        cprint("  1. 🎮  Mulai Permainan Baru ", 'white', 'on_green')
+        cprint("  2. 💾  Lanjutkan Permainan  ", 'white', 'on_blue')
         print()
-        cprint("Gunakan angka 1/2 lalu tekan Enter untuk memilih.".center(PANJANG_HEADER), 'grey')
+        cprint("Masukkan angka 1/2 lalu tekan Enter untuk memilih.".center(Panjang_Header), 'grey')
         
         pilihan = input("> ")
         if pilihan == '1':
@@ -642,15 +635,18 @@ def main():
                 cprint("Memulai game baru akan menghapus data lama.", 'yellow')
                 konfirmasi = input("Lanjutkan? (y/n) ").lower()
                 if konfirmasi == 'y':
-                    tampilkan_loading("Membuat game baru...")  # Loading tampil dulu, musik tetap jalan
+                    tampilkan_loading("Membuat game baru...")
                     if intro_berjalan:
                         pygame.mixer.music.stop()
+                    tampilkan_pesan("Game berhasil dimuat!", "success")
+                    time.sleep(1.5)   
                     data_pemain = game_baru()
-                    # tutorial_sudah tetap False untuk game baru
             else:
                 tampilkan_loading("Membuat game baru...")
                 if intro_berjalan:
                     pygame.mixer.music.stop()
+                tampilkan_pesan("Game berhasil dimuat!", "success")
+                time.sleep(1.5)
                 data_pemain = game_baru()
         elif pilihan == '2':
             tampilkan_loading("Memuat game...")
@@ -660,7 +656,8 @@ def main():
                     pygame.mixer.music.stop()
                 tampilkan_pesan("Game berhasil dimuat!", "success")
                 time.sleep(1.5)
-                tutorial_sudah = True  # <-- Set True agar tutorial tidak tampil saat load game
+                tutorial_sudah = True
+           
             else:
                 # Jika tidak ada data tersimpan, tetap mainkan musik intro
                 tampilkan_pesan("Tidak ada data game tersimpan.", "error")
@@ -676,19 +673,16 @@ def main():
     # Inisialisasi musik utama
     musik_tersedia = inisialisasi_musik()
     if musik_tersedia and data_pemain.get("musik_nyala", True):
-        try:
-            pygame.mixer.music.load(MUSIC_FILE)
-            pygame.mixer.music.play(loops=-1)
-        except:
-            tampilkan_pesan("Gagal memulai musik latar.", "error")
-    
+        pygame.mixer.music.load(MUSIC_FILE)
+        pygame.mixer.music.play(loops=-1)
+
     # Game loop utama
     sedang_berjalan = True
     notifikasi_layu = []
     while sedang_berjalan:
         bersihkan_layar()
         status = f"🗓 HARI KE-{data_pemain['hari']} | 💰 UANG: ${data_pemain['uang']} | 🏦 HUTANG: ${data_pemain['hutang']} "
-        cprint(status.center(PANJANG_HEADER), 'white', 'on_blue')
+        cprint(status.center(Panjang_Header), 'white', 'on_blue')
         tampilkan_lahan(data_pemain)
         
         # Menu utama
@@ -697,19 +691,19 @@ def main():
             "1. 🌱 Tanam Bibit", "2. 🛒 Pasar", "3. 💧 Siram Tanaman", "4. 🧺 Panen",
             "5. 💸 Jual Hasil", "6. 🎒 Inventaris", "7. 🏞️  Perluas Lahan",
             "8. 😴 Tidur", "9. 🏦 Bank", "10. ⚙️ Pengaturan",
-            f"11. 💾 Simpan & Keluar{' ' * (PANJANG_HEADER - 27)}"
+            f"11. 💾 Simpan & Keluar{' ' * (Panjang_Header - 27)}"
         ]
         baris_menu = 6
-        kolom_lebar = PANJANG_HEADER // 2
+        kolom_lebar = Panjang_Header // 2
         for i in range(baris_menu):
             kolom_kiri = menu_items[i]
             kolom_kanan = menu_items[i + baris_menu] if i + baris_menu < len(menu_items) else ""
             menu_line = f"{kolom_kiri.ljust(kolom_lebar)}{kolom_kanan.ljust(kolom_lebar)}"
-            print(menu_line[:PANJANG_HEADER])
+            print(menu_line[:Panjang_Header])
 
         # Tampilkan tutorial di bagian bawah menu aksi (bukan halaman sendiri)
         if not tutorial_sudah:
-            tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, PANJANG_HEADER, data_pemain)
+            tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, Panjang_Header, data_pemain)
             tutorial_sudah = True
 
         # Tampilkan notifikasi tanaman layu di bawah menu aksi
