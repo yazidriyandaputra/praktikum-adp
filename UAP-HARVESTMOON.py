@@ -31,7 +31,7 @@ EMOJI_TANAMAN = {"apel": "🍎", "tomat": "🍅", "lettuce": "🥬"}
 
 # Panjang header
 TEXT_HEADER = "HARVEST MOON"
-PANJANG_HEADER = max(len(line) for line in pyfiglet.figlet_format(TEXT_HEADER).splitlines())
+PANJANG_HEADER = 72
 
 def bersihkan_layar():
     """Membersihkan layar terminal"""
