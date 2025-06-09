@@ -33,11 +33,9 @@ Judul = "HARVEST MOON"
 Panjang_Header = 72
 
 def bersihkan_layar():
-    """Membersihkan layar terminal"""
     system('cls' if name == 'nt' else 'clear')
 
 def tampilkan_header(teks):
-    """Menampilkan header dengan panjang konsisten"""
     cprint(f"\n{'=' * Panjang_Header}", 'yellow')
     cprint(f"{teks.center(Panjang_Header)}", 'yellow', attrs=["bold"])
     cprint(f"{'=' * Panjang_Header}", 'yellow')
@@ -145,7 +143,7 @@ def tampilkan_lahan(data_pemain):
                 if hari_tersisa <= 0:
                     tampilan_str = colored(f"[{emoji_tanaman}P]", 'green', attrs=['bold'])
                 elif hari_tersisa == Hari_Tumbuh.get(tanaman["nama"]):
-                    tampilan_str = colored(f"[.🌱{status_air}]", 'yellow')
+                    tampilan_str = colored(f"[🌱{status_air}]", 'yellow')
                 else:
                     tampilan_str = colored(f"[🌿{status_air}]", 'cyan')
             baris_tampilan.append(tampilan_str)
@@ -634,8 +632,8 @@ def menu_awal():
             "[bold cyan]HARVEST MOON[/bold cyan]\n\n"
             "[cyan]Petualangan bertani dan berbisnis dimulai di sini.[/cyan]\n"
             "[magenta]Pilih menu di bawah untuk memulai:[/magenta]\n\n"
-            "[white on green] 1. 🎮  Mulai Permainan Baru [/white on green]\n"
-            "[white on blue]  2. 💾  Lanjutkan Permainan  [/white on blue]\n\n"
+            "[white on green] 1. 🎮  Mulai Permainan Baru  [/white on green]\n"
+            "[white on blue] 2. 💾  Lanjutkan Permainan   [/white on blue]\n\n"
             "[grey]Masukkan angka 1/2 lalu tekan Enter untuk memilih.[/grey]"
         )
         panel_width = min(judul_width, width - 4)
@@ -696,15 +694,18 @@ def tampilkan_menu_aksi(data_pemain, tutorial_sudah, notifikasi_layu):
     tampilkan_header("PILIH AKSI")
     menu_items = [
         "1. 🌱 Tanam Bibit", "2. 🛒 Pasar", "3. 💧 Siram Tanaman", "4. 🧺 Panen",
-        "5. 💸 Jual Hasil", "6. 🎒 Inventaris", "7. 🏞️  Perluas Lahan",
-        "8. 😴 Tidur", "9. 🏦 Bank", "10.⚙️ Pengaturan",
-        f"11. 💾 Simpan & Keluar{' ' * (Panjang_Header - 27)}"
+        "5. 💸 Jual Hasil", "6. 🎒 Inventaris", "7.  🏞️  Perluas Lahan",
+        "8.  😴 Tidur", "9.  🏦 Bank", "10. ⚙️  Pengaturan",
+        f"11. 💾 Simpan & Keluar"
     ]
     baris_menu = 6
     kolom_lebar = Panjang_Header // 2
     for i in range(baris_menu):
         kolom_kiri = menu_items[i]
-        kolom_kanan = menu_items[i + baris_menu] if i + baris_menu < len(menu_items) else ""
+        if i + baris_menu < len(menu_items):
+            kolom_kanan = menu_items[i + baris_menu] 
+        else:
+            kolom_kanan = ""
         menu_line = f"{kolom_kiri.ljust(kolom_lebar)}{kolom_kanan.ljust(kolom_lebar)}"
         print(menu_line[:Panjang_Header])
 
