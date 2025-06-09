@@ -42,8 +42,11 @@ def tampilkan_header(teks):
     cprint(f"{teks.center(Panjang_Header)}", 'yellow', attrs=["bold"])
     cprint(f"{'=' * Panjang_Header}", 'yellow')
 
-def judul_game(nama_game):
-    print(pyfiglet.figlet_format(nama_game))
+def tampilkan_judul_besar(judul, warna='yellow'):
+    """Menampilkan judul besar ASCII-art dengan warna tertentu"""
+    judul_art = pyfiglet.figlet_format(judul)
+    for baris in judul_art.splitlines():
+        cprint(baris, warna, attrs=['bold'])
 
 def tampilkan_pesan(teks, status="info"):
     """Menampilkan pesan dengan ikon dan warna yang sesuai"""
@@ -760,12 +763,6 @@ def proses_aksi(aksi, data_pemain):
         tampilkan_pesan("Aksi tidak valid!", "error")
         time.sleep(1)
     return notifikasi_layu
-
-def tampilkan_judul_besar(judul, warna='yellow'):
-    """Menampilkan judul besar ASCII-art dengan warna tertentu"""
-    judul_art = pyfiglet.figlet_format(judul)
-    for baris in judul_art.splitlines():
-        cprint(baris, warna, attrs=['bold'])
 
 def main():
     """Fungsi utama game"""
