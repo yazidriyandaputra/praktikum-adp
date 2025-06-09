@@ -1,17 +1,20 @@
-from os import system as clear_cmd
-from os import name as os_name
+from os import system, name
 from os.path import exists
 import time
 import random
 from termcolor import colored, cprint
 import pygame
 import pyfiglet
+from rich.console import Console
+from rich.panel import Panel
+from rich.align import Align
+import shutil
 
-SAVE_FILE = "harvest_moon.txt"
-MUSIC_FILE = "Harvest Moon_ Back to Nature  Spring  OST.mp3"
-INTRO_MUSIC_FILE = "Harvest Moon_ Back to Nature  Opening  OST.mp3"
+Save_File = "harvest_moon.txt"
+Musik_Utama = "Harvest Moon_ Back to Nature  Spring  OST.mp3"
+Musik_Intro = "Harvest Moon_ Back to Nature  Opening  OST.mp3"
 
-Uang_AwaL = 10
+Uang_Awal = 10
 Bibit_Apel_Awal = 3
 Ukuran_Lahan_Baris_Awal = 2
 Ukuran_Lahan_Kolom_Awal = 2
@@ -31,13 +34,16 @@ Panjang_Header = 72
 
 def bersihkan_layar():
     """Membersihkan layar terminal"""
-    clear_cmd('cls' if os_name == 'nt' else 'clear')
+    system('cls' if name == 'nt' else 'clear')
 
 def tampilkan_header(teks):
     """Menampilkan header dengan panjang konsisten"""
     cprint(f"\n{'=' * Panjang_Header}", 'yellow')
     cprint(f"{teks.center(Panjang_Header)}", 'yellow', attrs=["bold"])
     cprint(f"{'=' * Panjang_Header}", 'yellow')
+
+def judul_game(nama_game):
+    print(pyfiglet.figlet_format(nama_game))
 
 def tampilkan_pesan(teks, status="info"):
     """Menampilkan pesan dengan ikon dan warna yang sesuai"""
@@ -56,21 +62,18 @@ def tekan_enter():
 def mainkan_musik_intro():
     """Memainkan musik intro jika tersedia"""
     pygame.mixer.init()
-    pygame.mixer.music.load(INTRO_MUSIC_FILE)
+    pygame.mixer.music.load(Musik_Intro)
     pygame.mixer.music.play(-1)
     return True
 
 def inisialisasi_musik():
     """Menginisialisasi musik latar"""
     pygame.mixer.init()
-    pygame.mixer.music.load(MUSIC_FILE)
+    pygame.mixer.music.load(Musik_Utama)
     return True
 
-def toggle_musik(data_pemain, musik_tersedia):
+def key_musik(data_pemain):
     """Menyalakan/mematikan musik"""
-    if not musik_tersedia:
-        tampilkan_pesan("Fungsi musik tidak tersedia.", "error")
-        return
     if data_pemain.get("musik_nyala", False):
         pygame.mixer.music.stop()
         data_pemain["musik_nyala"] = False
@@ -82,9 +85,13 @@ def toggle_musik(data_pemain, musik_tersedia):
 
 def game_baru():
     """Membuat data game baru"""
-    lahan_awal = [[None] * Ukuran_Lahan_Kolom_Awal for _ in range(Ukuran_Lahan_Baris_Awal)]
+    lahan_awal = []
+    for _ in range(Ukuran_Lahan_Baris_Awal):
+        baris_lahan = [None] * Ukuran_Lahan_Kolom_Awal
+        lahan_awal.append(baris_lahan)
+
     return {
-        "uang": Uang_AwaL,
+        "uang": Uang_Awal,
         "bibit": {"apel": Bibit_Apel_Awal, "tomat": 0, "lettuce": 0},
         "inventaris": {},
         "baris_lahan": Ukuran_Lahan_Baris_Awal,
@@ -101,16 +108,16 @@ def game_baru():
 
 def simpan_game(data_pemain):
     """Menyimpan progress game"""
-    with open(SAVE_FILE, 'w') as f:
+    with open(Save_File, 'w') as f:
         for key, value in data_pemain.items():
             f.write(f"{key}:{repr(value)}\n")
 
 def muat_game():
     """Memuat progress game"""
-    if not exists(SAVE_FILE):
+    if not exists(Save_File):
         return None
     data_pemain = {}
-    with open(SAVE_FILE, 'r') as f:
+    with open(Save_File, 'r') as f:
         for line in f:
             if ':' in line:
                 key, value_str = line.strip().split(':', 1)
@@ -127,7 +134,7 @@ def tampilkan_lahan(data_pemain):
         for j in range(data_pemain["kolom_lahan"]):
             tanaman = data_pemain["lahan"][i][j]
             if tanaman is None:
-                tampilan_str = colored("[🟫]", 'white', 'on_grey')
+                tampilan_str = colored("[🟫]", 'white', None)
             else:
                 hari_tersisa = tanaman["hari_tumbuh"]
                 emoji_tanaman = Emoji_Tanaman.get(tanaman["nama"], "❓")
@@ -506,7 +513,7 @@ def pasar(data_pemain):
         elif pilihan == '3':
             break
 
-def pengaturan(data_pemain, musik_tersedia):
+def pengaturan(data_pemain):
     """Menu pengaturan game"""
     bersihkan_layar()
     tampilkan_header("⚙️ PENGATURAN ⚙️")
@@ -515,24 +522,25 @@ def pengaturan(data_pemain, musik_tersedia):
     
     pilihan = input("\nPilih opsi: ")
     if pilihan == '1':
-        toggle_musik(data_pemain, musik_tersedia)
+        key_musik(data_pemain)
 
 def tampilkan_loading(teks="Memuat...", durasi=2):
     """Menampilkan loading bar dengan info-info tentang game di bawah bar, info tampil acak (5 info berbeda) selama bar berjalan"""
     bersihkan_layar()
 
     # Tampilkan ASCII art HARVEST MOON
-    judul_game = pyfiglet.figlet_format(Judul)
-    print(judul_game)
+    judul_art = pyfiglet.figlet_format(Judul)
+    for baris in judul_art.splitlines():
+        cprint(baris, 'yellow', attrs=['bold'])
     cprint("=" * Panjang_Header, 'yellow')
     cprint("Selamat Datang di".center(Panjang_Header), 'yellow', attrs=['bold'])
-    cprint("HARVEST MOON".center(Panjang_Header), 'cyan', attrs=['bold', 'underline'])
+    cprint("HARVEST MOON".center(Panjang_Header), 'yellow', attrs=['bold', 'underline'])
     cprint("=" * Panjang_Header, 'yellow')
     print()
     cprint(teks.center(Panjang_Header), 'magenta')
     print()
 
-    bar_length = 40
+    panjang_bar = 40
 
     # Daftar info game
     info_list = [
@@ -552,15 +560,15 @@ def tampilkan_loading(teks="Memuat...", durasi=2):
     info_pilihan = random.sample(info_list, 5)
 
     delay = 0.2  # Delay per langkah
-    steps_per_info = 8
+    langkah_per_info = 8
 
-    for i in range(bar_length + 1):
-        percent = int((i / bar_length) * 100)
-        bar = '█' * i + '-' * (bar_length - i)
+    for i in range(panjang_bar + 1):
+        percent = int((i / panjang_bar) * 100)
+        bar = '█' * i + '-' * (panjang_bar - i)
         bar_str = f"[{bar}] {percent}%".center(Panjang_Header)
 
         # Pilih info berdasarkan bagian bar
-        info_idx = min(i // steps_per_info, 4)
+        info_idx = min(i // langkah_per_info, 4)
         info = info_pilihan[info_idx]
         info_str = colored(info.center(Panjang_Header), 'cyan')
 
@@ -569,7 +577,7 @@ def tampilkan_loading(teks="Memuat...", durasi=2):
         print(info_str)
 
         # Geser kursor ke atas 2 baris untuk menimpa
-        if i != bar_length:
+        if i != panjang_bar:
             print("\033[F\033[F", end='')
 
         time.sleep(delay)
@@ -603,36 +611,43 @@ def tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, Panjang_Header, data
         cprint("[Tekan Enter untuk lanjut]", 'white', 'on_grey')
         input()
 
-def main():
-    """Fungsi utama game"""
-    # Inisialisasi
-    bersihkan_layar()
-
+def menu_awal():
+    """Menampilkan menu awal dan mengembalikan data_pemain baru atau hasil load"""
+    console = Console()
+    intro_berjalan = mainkan_musik_intro()
     data_pemain = None
     tutorial_sudah = False
-
-    # Menu awal
-    intro_berjalan = mainkan_musik_intro()
+    width = shutil.get_terminal_size((80, 20)).columns
     while data_pemain is None:
         bersihkan_layar()
+        # Tampilkan judul besar dengan fungsi khusus
         judul_game = pyfiglet.figlet_format(Judul)
-        print(judul_game)
-        cprint("=" * Panjang_Header, 'yellow')
-        cprint("Selamat Datang di".center(Panjang_Header), 'yellow', attrs=['bold'])
-        cprint("HARVEST MOON".center(Panjang_Header), 'cyan', attrs=['bold', 'underline'])
-        cprint("=" * Panjang_Header, 'yellow')
-        cprint("Petualangan bertani dan berbisnis dimulai di sini.".center(Panjang_Header), 'cyan')
-        cprint("Pilih menu di bawah untuk memulai:".center(Panjang_Header), 'magenta')
-        print()
-        cprint("  1. 🎮  Mulai Permainan Baru ", 'white', 'on_green')
-        cprint("  2. 💾  Lanjutkan Permainan  ", 'white', 'on_blue')
-        print()
-        cprint("Masukkan angka 1/2 lalu tekan Enter untuk memilih.".center(Panjang_Header), 'grey')
-        
+        judul_lines = judul_game.splitlines()
+        judul_width = max(len(baris) for baris in judul_lines)
+        tampilkan_judul_besar(Judul, warna='yellow')
+        # Panel menu awal, lebar mengikuti judul, isi rata tengah
+        panel_text = (
+            "[bold yellow]Selamat Datang di[/bold yellow]\n"
+            "[bold cyan]HARVEST MOON[/bold cyan]\n\n"
+            "[cyan]Petualangan bertani dan berbisnis dimulai di sini.[/cyan]\n"
+            "[magenta]Pilih menu di bawah untuk memulai:[/magenta]\n\n"
+            "[white on green] 1. 🎮  Mulai Permainan Baru [/white on green]\n"
+            "[white on blue]  2. 💾  Lanjutkan Permainan  [/white on blue]\n\n"
+            "[grey]Masukkan angka 1/2 lalu tekan Enter untuk memilih.[/grey]"
+        )
+        panel_width = min(judul_width, width - 4)
+        console.print(
+            Panel(
+                Align.center(panel_text),
+                style="bold blue",
+                width=panel_width,
+                border_style="bright_yellow"
+            )
+        )
         pilihan = input("> ")
         if pilihan == '1':
-            if exists(SAVE_FILE):
-                cprint("Memulai game baru akan menghapus data lama.", 'yellow')
+            if exists(Save_File):
+                console.print("[yellow]Memulai game baru akan menghapus data lama.[/yellow]")
                 konfirmasi = input("Lanjutkan? (y/n) ").lower()
                 if konfirmasi == 'y':
                     tampilkan_loading("Membuat game baru...")
@@ -657,9 +672,7 @@ def main():
                 tampilkan_pesan("Game berhasil dimuat!", "success")
                 time.sleep(1.5)
                 tutorial_sudah = True
-           
             else:
-                # Jika tidak ada data tersimpan, tetap mainkan musik intro
                 tampilkan_pesan("Tidak ada data game tersimpan.", "error")
                 if not intro_berjalan:
                     intro_berjalan = mainkan_musik_intro()
@@ -669,92 +682,114 @@ def main():
             tampilkan_pesan("Pilihan tidak valid.", "error")
             time.sleep(1.2)
             bersihkan_layar()
-    
-    # Inisialisasi musik utama
-    musik_tersedia = inisialisasi_musik()
-    if musik_tersedia and data_pemain.get("musik_nyala", True):
-        pygame.mixer.music.load(MUSIC_FILE)
+    return data_pemain, tutorial_sudah
+
+def tampilkan_menu_aksi(data_pemain, tutorial_sudah, notifikasi_layu):
+    """Menampilkan menu aksi utama dan mengembalikan aksi yang dipilih"""
+    bersihkan_layar()
+    status = f"🗓 HARI KE-{data_pemain['hari']} | 💰 UANG: ${data_pemain['uang']} | 🏦 HUTANG: ${data_pemain['hutang']} "
+    cprint(status.center(Panjang_Header), 'white', 'on_blue')
+    tampilkan_lahan(data_pemain)
+    tampilkan_header("PILIH AKSI")
+    menu_items = [
+        "1. 🌱 Tanam Bibit", "2. 🛒 Pasar", "3. 💧 Siram Tanaman", "4. 🧺 Panen",
+        "5. 💸 Jual Hasil", "6. 🎒 Inventaris", "7. 🏞️  Perluas Lahan",
+        "8. 😴 Tidur", "9. 🏦 Bank", "10.⚙️ Pengaturan",
+        f"11. 💾 Simpan & Keluar{' ' * (Panjang_Header - 27)}"
+    ]
+    baris_menu = 6
+    kolom_lebar = Panjang_Header // 2
+    for i in range(baris_menu):
+        kolom_kiri = menu_items[i]
+        kolom_kanan = menu_items[i + baris_menu] if i + baris_menu < len(menu_items) else ""
+        menu_line = f"{kolom_kiri.ljust(kolom_lebar)}{kolom_kanan.ljust(kolom_lebar)}"
+        print(menu_line[:Panjang_Header])
+
+    # Tampilkan tutorial di bagian bawah menu aksi (bukan halaman sendiri)
+    if not tutorial_sudah:
+        tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, Panjang_Header, data_pemain)
+        tutorial_sudah = True
+
+    # Tampilkan notifikasi tanaman layu di bawah menu aksi
+    if notifikasi_layu:
+        for notif in notifikasi_layu:
+            cprint(notif, 'yellow')
+        tekan_enter()
+        notifikasi_layu.clear()
+
+    aksi = input("> ")
+    return aksi, tutorial_sudah
+
+def proses_aksi(aksi, data_pemain):
+    """Memproses aksi yang dipilih user dan mengembalikan notifikasi_layu jika ada"""
+    notifikasi_layu = []
+    if aksi == '1':
+        tanam_bibit(data_pemain)
+        tekan_enter()
+    elif aksi == '2':
+        pasar(data_pemain)
+    elif aksi == '3':
+        siram_tanaman(data_pemain)
+    elif aksi == '4':
+        panen(data_pemain)
+        tekan_enter()
+    elif aksi == '5':
+        jual_hasil(data_pemain)
+        tekan_enter()
+    elif aksi == '6':
+        tampilkan_inventaris(data_pemain)
+        tekan_enter()
+    elif aksi == '7':
+        perluas_lahan(data_pemain)
+        tekan_enter()
+    elif aksi == '8':
+        notifikasi_layu = tidur(data_pemain)
+        simpan_game(data_pemain)
+    elif aksi == '9':
+        bank(data_pemain)
+        tekan_enter()
+    elif aksi == '10':
+        pengaturan(data_pemain)
+        tekan_enter()
+    elif aksi == '11':
+        simpan_game(data_pemain)
+        tampilkan_pesan("Game berhasil disimpan. Sampai jumpa! 👋", "success")
+        time.sleep(2)
+        return "keluar"
+    else:
+        tampilkan_pesan("Aksi tidak valid!", "error")
+        time.sleep(1)
+    return notifikasi_layu
+
+def tampilkan_judul_besar(judul, warna='yellow'):
+    """Menampilkan judul besar ASCII-art dengan warna tertentu"""
+    judul_art = pyfiglet.figlet_format(judul)
+    for baris in judul_art.splitlines():
+        cprint(baris, warna, attrs=['bold'])
+
+def main():
+    """Fungsi utama game"""
+    bersihkan_layar()
+    tampilkan_judul_besar(Judul, warna='yellow')
+    data_pemain, tutorial_sudah = menu_awal()
+    inisialisasi_musik()
+    if data_pemain.get("musik_nyala", True):
+        pygame.mixer.music.load(Musik_Utama)
         pygame.mixer.music.play(loops=-1)
 
-    # Game loop utama
     sedang_berjalan = True
     notifikasi_layu = []
     while sedang_berjalan:
-        bersihkan_layar()
-        status = f"🗓 HARI KE-{data_pemain['hari']} | 💰 UANG: ${data_pemain['uang']} | 🏦 HUTANG: ${data_pemain['hutang']} "
-        cprint(status.center(Panjang_Header), 'white', 'on_blue')
-        tampilkan_lahan(data_pemain)
-        
-        # Menu utama
-        tampilkan_header("PILIH AKSI")
-        menu_items = [
-            "1. 🌱 Tanam Bibit", "2. 🛒 Pasar", "3. 💧 Siram Tanaman", "4. 🧺 Panen",
-            "5. 💸 Jual Hasil", "6. 🎒 Inventaris", "7. 🏞️  Perluas Lahan",
-            "8. 😴 Tidur", "9. 🏦 Bank", "10. ⚙️ Pengaturan",
-            f"11. 💾 Simpan & Keluar{' ' * (Panjang_Header - 27)}"
-        ]
-        baris_menu = 6
-        kolom_lebar = Panjang_Header // 2
-        for i in range(baris_menu):
-            kolom_kiri = menu_items[i]
-            kolom_kanan = menu_items[i + baris_menu] if i + baris_menu < len(menu_items) else ""
-            menu_line = f"{kolom_kiri.ljust(kolom_lebar)}{kolom_kanan.ljust(kolom_lebar)}"
-            print(menu_line[:Panjang_Header])
-
-        # Tampilkan tutorial di bagian bawah menu aksi (bukan halaman sendiri)
-        if not tutorial_sudah:
-            tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, Panjang_Header, data_pemain)
-            tutorial_sudah = True
-
-        # Tampilkan notifikasi tanaman layu di bawah menu aksi
-        if notifikasi_layu:
-            for notif in notifikasi_layu:
-                cprint(notif, 'yellow')
-            tekan_enter()
-            notifikasi_layu.clear()
-
-        aksi = input("> ")
-        
-        if aksi == '1':
-            tanam_bibit(data_pemain)
-            tekan_enter()
-        elif aksi == '2':
-            pasar(data_pemain)
-        elif aksi == '3':
-            siram_tanaman(data_pemain)
-        elif aksi == '4':
-            panen(data_pemain)
-            tekan_enter()
-        elif aksi == '5':
-            jual_hasil(data_pemain)
-            tekan_enter()
-        elif aksi == '6':
-            tampilkan_inventaris(data_pemain)
-            tekan_enter()
-        elif aksi == '7':
-            perluas_lahan(data_pemain)
-            tekan_enter()
-        elif aksi == '8':
-            notifikasi_layu = tidur(data_pemain)
-            simpan_game(data_pemain)
-        elif aksi == '9':
-            bank(data_pemain)
-            tekan_enter()
-        elif aksi == '10':
-            pengaturan(data_pemain, musik_tersedia)
-            tekan_enter()
-        elif aksi == '11':
-            simpan_game(data_pemain)
-            tampilkan_pesan("Game berhasil disimpan. Sampai jumpa! 👋", "success")
-            sedang_berjalan = False
-            time.sleep(2)
+        aksi, tutorial_sudah = tampilkan_menu_aksi(data_pemain, tutorial_sudah, notifikasi_layu)
+        hasil = proses_aksi(aksi, data_pemain)
+        if hasil == "keluar":
+            break
+        elif isinstance(hasil, list):
+            notifikasi_layu = hasil
         else:
-            tampilkan_pesan("Aksi tidak valid!", "error")
-            time.sleep(1)
-    
-    # Berhentikan musik saat keluar
-    if musik_tersedia:
-        pygame.mixer.music.stop()
+            notifikasi_layu = []
+
+    pygame.mixer.music.stop()
 
 if __name__ == "__main__":
     main()
