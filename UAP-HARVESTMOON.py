@@ -220,6 +220,9 @@ def siram_tanaman(data_pemain):
             tampilkan_pesan("Masukkan angka yang valid!", "error")
             time.sleep(1)
             continue
+        if baris == -1:
+            return False
+        
         try:
             kolom = int(input(f"Kolom (1-{data_pemain['kolom_lahan']}): ")) - 1
         except ValueError:
