@@ -40,7 +40,7 @@ def tampilkan_header(teks):
     cprint(f"{teks.center(Panjang_Header)}", "yellow", attrs=["bold"])
     cprint(f"{'=' * Panjang_Header}", "yellow")
 
-def tampilkan_judul_besar(judul, warna="yellow"):
+def tampilkan_judul_besar(judul, warna):
     judul_art = pyfiglet.figlet_format(judul)
     for baris in judul_art.splitlines():
         cprint(baris, warna, attrs=['bold'])
@@ -459,8 +459,8 @@ def pasar(data_pemain):
                     continue
                 print(f"- {Emoji_Tanaman.get(bibit, '')} {bibit.capitalize()}: ${harga}")
             
-            bibit_dibeli = input("\nApa yang ingin kamu beli? (atau 'batal'): ").lower()
-            if bibit_dibeli == 'batal':
+            bibit_dibeli = input("\nApa yang ingin kamu beli? (atau 'batal'): ")
+            if bibit_dibeli == 0:
                 continue
                 
             if bibit_dibeli in Harga_Bibit:
@@ -529,25 +529,24 @@ def pengaturan(data_pemain):
     if pilihan == '1':
         key_musik(data_pemain)
 
-def tampilkan_loading(teks="Memuat...", durasi=2):
+def tampilkan_loading(teks):
+    time.sleep(0.5)
     bersihkan_layar()
     console = Console()
-    tampilkan_judul_besar("HARVEST MOON", warna="yellow")
+    tampilkan_judul_besar(Judul, "yellow")
 
     emoji_top = "🌾🌻🥕🌽🥦🍅"
     emoji_bottom = "🍀🌱🌾🌻🌾🌱🍀"
 
-    # buat garis polos
     garis_plain = "=" * 68
 
-    # panel_isi menggunakan tag warna Rich, jangan pakai colored() di sini
     panel_isi = "\n".join([
         emoji_top.center(64),
         f"[yellow]{garis_plain}[/yellow]",
         "[yellow][bold]Selamat Datang di[/bold][/yellow]",
-        "[bold cyan]HARVEST MOON[/bold cyan]",
-        "[cyan]Petualangan bertani dan berbisnis dimulai di sini.[/cyan]",
-        "[magenta]Tips: Bertanilah dengan hati, panenlah dengan bahagia![/magenta]",
+        "[bold cyan]HARVEST MOON[/bold cyan]\n",
+        "[cyan]Game bertani dan berbisnis terbaik.[/cyan]",
+        "[magenta]Jadilah petani sukses dan raih uang sebanyak-banyaknya.\n[/magenta]",
         f"[yellow]{garis_plain}[/yellow]",
         emoji_bottom.center(64)
     ])
@@ -561,18 +560,18 @@ def tampilkan_loading(teks="Memuat...", durasi=2):
         )
     )
 
-    # untuk teks biasa di terminal, gunakan colored supaya bisa warna tapi tetap rapi
     teks_centered = teks.center(72)
-    cprint(teks_centered, "magenta", attrs=["bold"])
+    cprint(f"{teks_centered}\n", "magenta", attrs=["bold"])
 
     info_list = [
-        "Tips: Siram tanamanmu setiap hari agar tidak layu!",
-        "Kamu bisa memperluas lahan untuk menanam lebih banyak.",
-        "Jual hasil panen di pasar untuk mendapatkan uang.",
+        "Kamu bisa memperluas lahan untuk menanam lebih banyak tanaman.",
+        "Jual hasil panenmu untuk mendapatkan lebih banyak uang.",
         "Upgrade kapasitas air agar bisa menyiram lebih banyak tanaman.",
         "Mas Joko selalu siap membantumu di desa ini.",
-        "Tanaman yang tidak disiram akan layu saat kamu tidur.",
-        "Kamu bisa meminjam uang di bank jika kehabisan modal.",
+        "Tanaman yang tidak disiram akan layu.",
+        "Kamu bisa meminjam uang di bank.",
+        "Kamu bisa mematikan musik di pengaturan.",
+        "Bibit Tomat dan Lettuce akan terbuka setelah panen Apel.",
         "Panen tanaman saat sudah matang untuk membuka bibit baru.",
         "Jangan lupa simpan permainanmu secara berkala!",
         "Setiap tanaman punya waktu tumbuh yang berbeda.",
@@ -580,16 +579,16 @@ def tampilkan_loading(teks="Memuat...", durasi=2):
 
     info_pilihan = random.sample(info_list, 5)
     panjang_bar = 40
-    delay = 0.05
+    delay = 0.3
     langkah_per_info = 8
 
     for i in range(panjang_bar + 1):
-        percent = int((i / panjang_bar) * 100)
+        persen = int((i / panjang_bar) * 100)
         bar = "█" * i + "-" * (panjang_bar - i)
-        bar_str = f"[{bar}] {percent}%".center(80)
+        bar_str = f"[{bar}] {persen}%".center(72)
 
-        info_idx = min(i // langkah_per_info, 4)
-        info = info_pilihan[info_idx]
+        indeks_info = min(i // langkah_per_info, 4)
+        info = info_pilihan[indeks_info]
         info_str = colored(info.center(72), "cyan")
 
         print(bar_str)
@@ -608,7 +607,7 @@ def tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, Panjang_Header, data
         ("Mas Joko", "😮", "Di sini kamu bisa menanam bibit, menyiram tanaman, dan memanen hasilnya."),
         ("Mas Joko", "😅", "Jangan lupa untuk selalu menyiram tanamanmu setiap hari agar tidak layu!"),
         ("Mas Joko", "👍", "Kamu juga bisa memperluas lahan, membeli bibit baru, dan mengelola barangmu di inventaris."),
-        ("Mas Joko", "💡", "Jika butuh uang, kamu bisa menjual hasil panenmu di pasar atau meminjam uang di bank."),
+        ("Mas Joko", "💡", "Jika butuh uang, kamu bisa menjual hasil panenmu atau meminjam uang di bank."),
         ("Mas Joko", "😃", "Selamat bertani dan semoga sukses!"),
     ]
     for nama, ekspresi, kalimat in dialog:
@@ -636,12 +635,10 @@ def menu_awal():
     width = shutil.get_terminal_size((80, 20)).columns
     while data_pemain is None:
         bersihkan_layar()
-        # Tampilkan judul besar dengan fungsi khusus
         judul_game = pyfiglet.figlet_format(Judul)
         judul_lines = judul_game.splitlines()
         judul_width = max(len(baris) for baris in judul_lines)
-        tampilkan_judul_besar(Judul, warna="yellow")
-        # Hiasan garis dengan emoji pertanian di tengah
+        tampilkan_judul_besar(Judul, "yellow")
         emoji = "🌾🌻🥕🌽🥦🍅"
         garis_kiri = colored("=" * 30,"yellow")
         garis_kanan = colored("=" * 30,"yellow")
@@ -669,7 +666,8 @@ def menu_awal():
         if pilihan == '1':
             if exists(Save_File):
                 console.print("[yellow]Memulai game baru akan menghapus data lama.[/yellow]")
-                konfirmasi = input("Lanjutkan? (y/n) ").lower()
+                print("Apakah kamu yakin ingin melanjutkan? (y/n)")
+                konfirmasi = input("> ").lower()
                 if konfirmasi == 'y':
                     tampilkan_loading("Membuat game baru...")
                     if intro_berjalan:
@@ -708,14 +706,14 @@ def menu_awal():
 def tampilkan_menu_aksi(data_pemain, tutorial_sudah, notifikasi_layu):
     bersihkan_layar()
     status = f"🗓 HARI KE-{data_pemain['hari']} | 💰 UANG: ${data_pemain['uang']} | 🏦 HUTANG: ${data_pemain['hutang']} "
-    cprint(status.center(Panjang_Header), "white", 'on_blue')
+    cprint(status.center(70), "white", 'on_blue')
     tampilkan_lahan(data_pemain)
     tampilkan_header("PILIH AKSI")
     menu_items = [
         "1. 🌱 Tanam Bibit", "2. 🛒 Pasar", "3. 💧 Siram Tanaman", "4. 🧺 Panen",
         "5. 💸 Jual Hasil", "6. 🎒 Inventaris", "7.  🏞️  Perluas Lahan",
         "8.  😴 Tidur", "9.  🏦 Bank", "10. ⚙️  Pengaturan",
-        f"11. 💾 Simpan & Keluar"
+        "11. 💾 Simpan & Keluar"
     ]
     baris_menu = 6
     kolom_lebar = Panjang_Header // 2
@@ -728,12 +726,10 @@ def tampilkan_menu_aksi(data_pemain, tutorial_sudah, notifikasi_layu):
         menu_line = f"{kolom_kiri.ljust(kolom_lebar)}{kolom_kanan.ljust(kolom_lebar)}"
         print(menu_line[:Panjang_Header])
 
-    # Tampilkan tutorial di bagian bawah menu aksi (bukan halaman sendiri)
     if not tutorial_sudah:
         tampilkan_tutorial(menu_items, baris_menu, kolom_lebar, Panjang_Header, data_pemain)
         tutorial_sudah = True
 
-    # Tampilkan notifikasi tanaman layu di bawah menu aksi
     if notifikasi_layu:
         for notif in notifikasi_layu:
             cprint(notif, "yellow")
@@ -752,6 +748,7 @@ def proses_aksi(aksi, data_pemain):
         pasar(data_pemain)
     elif aksi == '3':
         siram_tanaman(data_pemain)
+        tekan_enter()
     elif aksi == '4':
         panen(data_pemain)
         tekan_enter()
@@ -785,7 +782,7 @@ def proses_aksi(aksi, data_pemain):
 
 def main():
     bersihkan_layar()
-    tampilkan_judul_besar(Judul, warna="yellow")
+    tampilkan_judul_besar(Judul, "yellow")
     data_pemain, tutorial_sudah = menu_awal()
     inisialisasi_musik()
     if data_pemain.get("musik_nyala", True):
